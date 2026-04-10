@@ -12,23 +12,25 @@ const Tab = createBottomTabNavigator();
 
 interface TabIconProps {
   focused: boolean;
-  emoji: string;
+  icon: string;
   label: string;
   badge?: number;
 }
 
-function TabIcon({ focused, emoji, label, badge }: TabIconProps) {
+function TabIcon({ focused, icon, label, badge }: TabIconProps) {
   return (
     <View style={styles.iconWrapper}>
       <View style={[styles.iconBg, focused && styles.iconBgActive]}>
-        <Text style={[styles.iconEmoji, focused && styles.iconEmojiActive]}>{emoji}</Text>
+        <Text style={[styles.iconText, focused && styles.iconTextActive]}>{icon}</Text>
         {badge != null && badge > 0 && (
           <View style={styles.badge}>
             <Text style={styles.badgeText}>{badge > 99 ? '99+' : badge}</Text>
           </View>
         )}
       </View>
-      <Text style={[styles.iconLabel, focused && styles.iconLabelActive]} numberOfLines={1}>{label}</Text>
+      <Text style={[styles.iconLabel, focused && styles.iconLabelActive]} numberOfLines={1}>
+        {label}
+      </Text>
     </View>
   );
 }
@@ -38,7 +40,6 @@ export default function TabNavigator() {
   const isRecording = recordingState === 'recording';
   const insets = useSafeAreaInsets();
 
-  // Extra bottom padding for devices with gesture nav bar or hardware buttons (e.g. Samsung S24)
   const tabBarHeight = 64 + insets.bottom;
 
   return (
@@ -56,7 +57,7 @@ export default function TabNavigator() {
           tabBarIcon: ({ focused }) => (
             <TabIcon
               focused={focused}
-              emoji={isRecording ? '🔴' : '🎙'}
+              icon={isRecording ? '⏺' : '⬤'}
               label="Запись"
             />
           ),
@@ -69,7 +70,7 @@ export default function TabNavigator() {
           tabBarIcon: ({ focused }) => (
             <TabIcon
               focused={focused}
-              emoji="📝"
+              icon="≡"
               label="Заметки"
               badge={notes.length > 0 ? notes.length : undefined}
             />
@@ -81,7 +82,7 @@ export default function TabNavigator() {
         component={SettingsScreen}
         options={{
           tabBarIcon: ({ focused }) => (
-            <TabIcon focused={focused} emoji="⚙️" label="Настройки" />
+            <TabIcon focused={focused} icon="◎" label="Настройки" />
           ),
         }}
       />
@@ -92,37 +93,39 @@ export default function TabNavigator() {
 const styles = StyleSheet.create({
   tabBar: {
     backgroundColor: colors.backgroundSecondary,
-    borderTopColor: colors.divider,
+    borderTopColor: colors.border,
     borderTopWidth: 1,
     paddingTop: 6,
   },
   iconWrapper: {
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 2,
+    gap: 3,
     width: 72,
   },
   iconBg: {
-    width: 48,
-    height: 32,
-    borderRadius: 16,
+    width: 52,
+    height: 34,
+    borderRadius: 17,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
   },
   iconBgActive: {
     backgroundColor: colors.primaryGlow,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 229, 160, 0.25)',
   },
-  iconEmoji: {
-    fontSize: 20,
-    opacity: 0.5,
+  iconText: {
+    fontSize: 18,
+    color: colors.textMuted,
   },
-  iconEmojiActive: {
-    opacity: 1,
+  iconTextActive: {
+    color: colors.primary,
   },
   iconLabel: {
     ...typography.caption,
-    color: colors.textDisabled,
+    color: colors.textMuted,
     fontSize: 10,
     lineHeight: 13,
     textAlign: 'center',
@@ -134,7 +137,7 @@ const styles = StyleSheet.create({
   badge: {
     position: 'absolute',
     top: -2,
-    right: 2,
+    right: 4,
     backgroundColor: colors.primary,
     borderRadius: 8,
     minWidth: 16,
@@ -145,7 +148,7 @@ const styles = StyleSheet.create({
   },
   badgeText: {
     ...typography.caption,
-    color: '#FFFFFF',
+    color: colors.background,
     fontSize: 9,
     fontWeight: '700',
   },

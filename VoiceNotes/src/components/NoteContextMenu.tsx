@@ -86,7 +86,7 @@ export default function NoteContextMenu({
       const date = formatDate(note.createdAt);
       const duration = formatDuration(note.duration);
       const content = [
-        `ЛРПК Транскрибация — Заметка`,
+        `VoiceNotes — Заметка`,
         `═══════════════════════════════`,
         `Дата: ${date}`,
         `Длительность: ${duration}`,
@@ -110,7 +110,7 @@ export default function NoteContextMenu({
         .trim()
         .slice(0, 30)
         .replace(/\s+/g, '_');
-      const fileName = `ЛРПК_${safeTitle}_${Date.now()}.txt`;
+      const fileName = `VN_${safeTitle}_${Date.now()}.txt`;
       const fileUri = `${cacheDirectory}${fileName}`;
 
       await writeAsStringAsync(fileUri, content, {

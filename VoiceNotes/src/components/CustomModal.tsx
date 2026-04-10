@@ -59,7 +59,7 @@ export default function CustomModal({
         <Animated.View style={[StyleSheet.absoluteFill, styles.overlayBg, overlayStyle]} />
         <Pressable onPress={() => {}} style={styles.hitSlop}>
           <Animated.View style={[styles.card, cardStyle]}>
-            {/* Title */}
+            {/* Title row */}
             <View style={styles.titleRow}>
               <View style={styles.titleAccent} />
               <Text style={styles.title}>{title}</Text>
@@ -81,6 +81,7 @@ export default function CustomModal({
                     btn.style === 'destructive' && styles.buttonDestructive,
                     btn.style === 'cancel' && styles.buttonCancel,
                     pressed && styles.buttonPressed,
+                    i < buttons.length - 1 && styles.buttonBorder,
                   ]}
                   onPress={() => {
                     onClose?.();
@@ -162,9 +163,11 @@ const styles = StyleSheet.create({
   button: {
     paddingVertical: 15,
     paddingHorizontal: spacing.md,
+    alignItems: 'center',
+  },
+  buttonBorder: {
     borderBottomWidth: 1,
     borderBottomColor: colors.divider,
-    alignItems: 'center',
   },
   buttonDestructive: {},
   buttonCancel: {},

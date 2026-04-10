@@ -1,43 +1,44 @@
 export const colors = {
-  // Тёплый тёмный фон (не чёрный, а кофейный)
-  background: '#110E0B',
-  backgroundSecondary: '#1A1612',
-  card: '#211C17',
-  cardElevated: '#2B2420',
+  // Deep dark navy-purple backgrounds
+  background: '#0D1121',
+  backgroundSecondary: '#131729',
+  card: '#171D35',
+  cardElevated: '#1C2340',
 
-  // Мягкий терракотово-оранжевый (не кислотный)
-  primary: '#C97B45',
-  primaryLight: '#D9965E',
-  primaryDark: '#A5622F',
-  primaryGlow: 'rgba(201, 123, 69, 0.18)',
-  accent: '#B8906A',
-  accentDark: '#9A7355',
+  // Teal / cyan-green accent
+  primary: '#00E5A0',
+  primaryLight: '#33EBB3',
+  primaryDark: '#00B87A',
+  primaryGlow: 'rgba(0, 229, 160, 0.13)',
+  primaryGlowStrong: 'rgba(0, 229, 160, 0.22)',
+  accent: '#00C48C',
+  accentDark: '#008F65',
 
-  // Запись — тихий красно-оранжевый
-  recording: '#B84A32',
-  recordingGlow: 'rgba(184, 74, 50, 0.25)',
-  recordingDark: '#963D28',
+  // Recording — vivid red
+  recording: '#FF4757',
+  recordingGlow: 'rgba(255, 71, 87, 0.22)',
+  recordingDark: '#CC3244',
 
-  // Текст — кремово-бежевый, глаза не режет
-  textPrimary: '#F0E8DF',       // тёплый кремовый
-  textSecondary: '#C4B09A',     // тёплый бежевый
-  textMuted: '#7A6755',         // кофейно-серый
-  textDisabled: '#3D3228',      // совсем приглушённый
+  // Text — cool-toned whites and grays
+  textPrimary: '#E8EDF8',
+  textSecondary: '#8F9BBF',
+  textMuted: '#4A5278',
+  textDisabled: '#2A3058',
 
-  // Границы и разделители
-  border: '#2E2520',
-  borderLight: '#3D3028',
-  divider: '#1C1713',
+  // Borders and dividers
+  border: '#1E2540',
+  borderLight: '#262E4A',
+  divider: '#131729',
 
-  // Статусы
-  success: '#5A9E4E',
-  successBg: 'rgba(90, 158, 78, 0.13)',
-  error: '#C05050',
-  errorBg: 'rgba(192, 80, 80, 0.13)',
+  // Status
+  success: '#00E5A0',
+  successBg: 'rgba(0, 229, 160, 0.10)',
+  error: '#FF4757',
+  errorBg: 'rgba(255, 71, 87, 0.12)',
 
-  // Оверлей
-  overlay: 'rgba(0, 0, 0, 0.65)',
-  shadow: 'rgba(201, 123, 69, 0.12)',
+  // Overlay
+  overlay: 'rgba(0, 0, 0, 0.75)',
+  shadow: 'rgba(0, 229, 160, 0.10)',
 };
 
 export const spacing = {
@@ -71,15 +72,15 @@ export const shadows = {
   glow: {
     shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.45,
-    shadowRadius: 18,
-    elevation: 8,
+    shadowOpacity: 0.5,
+    shadowRadius: 20,
+    elevation: 10,
   },
   card: {
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.35,
-    shadowRadius: 6,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    elevation: 5,
   },
 };

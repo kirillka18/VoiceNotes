@@ -21,16 +21,17 @@ export default function NoteCard({ note, onDelete }: NoteCardProps) {
         onLongPress={() => setMenuVisible(true)}
         android_ripple={{ color: colors.primaryGlow }}
       >
+        {/* Accent bar */}
+        <View style={styles.accentBar} />
+
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.titleRow}>
-            <View style={styles.dot} />
             <Text style={styles.title} numberOfLines={expanded ? undefined : 2}>
               {note.title}
             </Text>
           </View>
 
-          {/* Кнопка трёх точек */}
           <Pressable
             style={styles.menuBtn}
             onPress={() => setMenuVisible(true)}
@@ -43,29 +44,37 @@ export default function NoteCard({ note, onDelete }: NoteCardProps) {
 
         {/* Meta */}
         <View style={styles.meta}>
-          <Text style={styles.metaText}>{formatDate(note.createdAt)}</Text>
-          <Text style={styles.metaDot}>·</Text>
-          <Text style={styles.metaText}>{formatDuration(note.duration)}</Text>
+          <View style={styles.metaChip}>
+            <Text style={styles.metaText}>{formatDate(note.createdAt)}</Text>
+          </View>
+          <View style={styles.metaChip}>
+            <Text style={styles.metaText}>{formatDuration(note.duration)}</Text>
+          </View>
           {note.wordCount > 0 && (
-            <>
-              <Text style={styles.metaDot}>·</Text>
+            <View style={styles.metaChip}>
               <Text style={styles.metaText}>{note.wordCount} сл.</Text>
-            </>
+            </View>
           )}
         </View>
 
         {/* AI Summary */}
         <View style={styles.summaryBlock}>
-          <Text style={styles.blockLabel}>AI ЗАМЕТКИ</Text>
+          <View style={styles.summaryLabelRow}>
+            <View style={styles.summaryDot} />
+            <Text style={styles.blockLabel}>AI ЗАМЕТКИ</Text>
+          </View>
           <Text style={styles.summaryText} numberOfLines={expanded ? undefined : 4}>
             {note.summary}
           </Text>
         </View>
 
-        {/* Оригинальная расшифровка — только в развёрнутом виде */}
+        {/* Transcript — only when expanded */}
         {expanded && note.transcript.length > 0 && (
           <View style={styles.transcriptBlock}>
-            <Text style={styles.blockLabel}>РАСШИФРОВКА</Text>
+            <View style={styles.summaryLabelRow}>
+              <View style={styles.transcriptDot} />
+              <Text style={[styles.blockLabel, styles.blockLabelMuted]}>РАСШИФРОВКА</Text>
+            </View>
             <View style={styles.quoteBar} />
             <Text style={styles.transcriptText}>{note.transcript}</Text>
           </View>
@@ -73,7 +82,7 @@ export default function NoteCard({ note, onDelete }: NoteCardProps) {
 
         {!expanded && (
           <Text style={styles.expandHint}>
-            {note.transcript.length > 0 ? 'Нажми чтобы раскрыть расшифровку' : 'Нажми чтобы свернуть'}
+            {note.transcript.length > 0 ? '↓ раскрыть расшифровку' : '↑ свернуть'}
           </Text>
         )}
       </Pressable>
@@ -93,14 +102,26 @@ const styles = StyleSheet.create({
     backgroundColor: colors.card,
     borderRadius: radius.lg,
     padding: spacing.md,
+    paddingLeft: spacing.md + 4,
     marginBottom: spacing.sm,
     borderWidth: 1,
     borderColor: colors.border,
     gap: spacing.sm,
+    overflow: 'hidden',
   },
   cardPressed: {
     backgroundColor: colors.cardElevated,
     borderColor: colors.borderLight,
+  },
+  accentBar: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 3,
+    backgroundColor: colors.primary,
+    borderTopLeftRadius: radius.lg,
+    borderBottomLeftRadius: radius.lg,
   },
   header: {
     flexDirection: 'row',
@@ -110,17 +131,6 @@ const styles = StyleSheet.create({
   },
   titleRow: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: spacing.sm,
-  },
-  dot: {
-    width: 7,
-    height: 7,
-    borderRadius: 4,
-    backgroundColor: colors.primary,
-    marginTop: 6,
-    flexShrink: 0,
   },
   title: {
     ...typography.h3,
@@ -149,17 +159,43 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexWrap: 'wrap',
     gap: spacing.xs,
-    paddingLeft: 15,
+  },
+  metaChip: {
+    backgroundColor: colors.backgroundSecondary,
+    borderRadius: radius.full,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   metaText: { ...typography.caption, color: colors.textMuted },
-  metaDot: { color: colors.border, fontSize: 12 },
 
   summaryBlock: { gap: 6 },
+  summaryLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+  summaryDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: colors.primary,
+  },
+  transcriptDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: colors.textMuted,
+  },
   blockLabel: {
     ...typography.caption,
     color: colors.primary,
     fontWeight: '700',
     letterSpacing: 1.2,
+  },
+  blockLabelMuted: {
+    color: colors.textMuted,
   },
   summaryText: {
     ...typography.body,
@@ -174,7 +210,7 @@ const styles = StyleSheet.create({
     top: 22,
     bottom: 0,
     width: 2,
-    backgroundColor: colors.borderLight,
+    backgroundColor: colors.border,
     borderRadius: 2,
   },
   transcriptText: {

@@ -52,19 +52,14 @@ export default function HomeScreen() {
 
   const transcriptScrollRef = useRef<ScrollView>(null);
   const summaryScrollRef = useRef<ScrollView>(null);
-  // Ref to avoid stale closure in speech recognition event handlers
   const isRecordingRef = useRef(false);
   useEffect(() => { isRecordingRef.current = isRecording; }, [isRecording]);
 
   // ─── Speech recognition events ────────────────────────────────────────────
 
-  useSpeechRecognitionEvent('start', () => {
-    // recognition started
-  });
+  useSpeechRecognitionEvent('start', () => {});
 
   useSpeechRecognitionEvent('end', () => {
-    // expo-speech-recognition with continuous:true handles restart automatically on Android.
-    // Manual restart as fallback for edge cases using ref to avoid stale closure.
     if (isRecordingRef.current) {
       setTimeout(() => {
         if (isRecordingRef.current) {
@@ -216,15 +211,18 @@ export default function HomeScreen() {
 
       {/* Header */}
       <View style={styles.header}>
-        <View>
-          <Text style={styles.headerTitle}>ЛРПК</Text>
-          <Text style={styles.headerSubtitle}>транскрибация</Text>
-        </View>
-        {/* Индикатор активных настроек */}
-        <View style={styles.headerBadges}>
-          <View style={styles.badge}>
-            <Text style={styles.badgeText}>🌐 {langLabel}</Text>
+        <View style={styles.headerLeft}>
+          <View style={styles.logoMark}>
+            <Text style={styles.logoText}>VN</Text>
           </View>
+          <View>
+            <Text style={styles.headerTitle}>VoiceNotes</Text>
+            <Text style={styles.headerSubtitle}>транскрибация</Text>
+          </View>
+        </View>
+        <View style={styles.headerBadge}>
+          <View style={styles.langDot} />
+          <Text style={styles.headerBadgeText}>{langLabel}</Text>
         </View>
       </View>
 
@@ -245,9 +243,12 @@ export default function HomeScreen() {
                 </Text>
               </View>
               {isRecording && (
-                <Text style={styles.timer}>{formatTime(sessionDuration)}</Text>
+                <View style={styles.timerChip}>
+                  <Text style={styles.timer}>{formatTime(sessionDuration)}</Text>
+                </View>
               )}
             </View>
+            <View style={styles.cardDivider} />
             <ScrollView
               ref={transcriptScrollRef}
               style={styles.transcriptScroll}
@@ -264,11 +265,14 @@ export default function HomeScreen() {
         {(streamingSummary.length > 0 || isSummaryStreaming || summaryError) && (
           <View style={[styles.card, styles.summaryCard]}>
             <View style={styles.cardHeader}>
-              <Text style={styles.cardLabel}>AI ЗАМЕТКИ</Text>
+              <View style={styles.aiLabelRow}>
+                <View style={styles.aiDot} />
+                <Text style={[styles.cardLabel, styles.cardLabelAi]}>AI ЗАМЕТКИ</Text>
+              </View>
               <View style={styles.cardHeaderRight}>
                 {isSummaryStreaming ? (
                   <View style={styles.streamingBadge}>
-                    <Text style={styles.streamingText}>✦ обрабатывает...</Text>
+                    <Text style={styles.streamingText}>● обработка</Text>
                   </View>
                 ) : (
                   liveTranscript.length > 0 && !isRecording && (
@@ -283,6 +287,7 @@ export default function HomeScreen() {
                 )}
               </View>
             </View>
+            <View style={styles.cardDivider} />
 
             {summaryError ? (
               <View style={styles.errorBox}>
@@ -313,7 +318,9 @@ export default function HomeScreen() {
         {/* Idle placeholder */}
         {isIdle && liveTranscript.length === 0 && streamingSummary.length === 0 && (
           <View style={styles.placeholder}>
-            <Text style={styles.placeholderEmoji}>🎙</Text>
+            <View style={styles.placeholderIcon}>
+              <Text style={styles.placeholderIconText}>◎</Text>
+            </View>
             <Text style={styles.placeholderTitle}>Готов к записи</Text>
             <Text style={styles.placeholderText}>
               Нажмите кнопку ниже, чтобы начать.{'\n'}
@@ -335,7 +342,7 @@ export default function HomeScreen() {
               onPress={handleSave}
             >
               <Text style={styles.saveBtnText}>
-                {isSummaryStreaming ? 'Обрабатывается...' : '💾 Сохранить заметку'}
+                {isSummaryStreaming ? 'Обрабатывается...' : '↓ Сохранить заметку'}
               </Text>
             </Pressable>
           </View>
@@ -365,57 +372,61 @@ const styles = StyleSheet.create({
     paddingTop: spacing.sm,
     paddingBottom: spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: colors.divider,
+    borderBottomColor: colors.border,
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  logoMark: {
+    width: 36,
+    height: 36,
+    borderRadius: radius.sm,
+    backgroundColor: colors.primaryGlow,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 229, 160, 0.3)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logoText: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: colors.primary,
+    letterSpacing: 1,
   },
   headerTitle: {
-    ...typography.h2,
-    color: colors.primary,
+    ...typography.h3,
+    color: colors.textPrimary,
+    fontSize: 16,
   },
   headerSubtitle: {
     ...typography.caption,
     color: colors.textMuted,
-    marginTop: 2,
+    marginTop: 1,
   },
-  headerBadges: {
+  headerBadge: {
     flexDirection: 'row',
-    gap: spacing.xs,
     alignItems: 'center',
-  },
-  badge: {
+    gap: 5,
     backgroundColor: colors.card,
     borderRadius: radius.full,
     paddingHorizontal: spacing.sm,
-    paddingVertical: 5,
+    paddingVertical: 6,
     borderWidth: 1,
     borderColor: colors.border,
   },
-  badgeText: {
+  langDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: colors.primary,
+  },
+  headerBadgeText: {
     ...typography.caption,
-    color: colors.textMuted,
-    fontWeight: '600',
-  },
-  langDropdownUnused: {
-    // kept to avoid removing block prematurely
-  },
-  langOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    padding: spacing.sm,
-  },
-  langOptionActive: {
-    backgroundColor: colors.primaryGlow,
-  },
-  langOptionLabel: {
-    ...typography.caption,
-    color: colors.primary,
-    fontWeight: '700',
-    width: 24,
-  },
-  langOptionName: {
-    ...typography.body,
     color: colors.textSecondary,
-    fontSize: 13,
+    fontWeight: '700',
+    fontSize: 11,
   },
   scroll: {
     flex: 1,
@@ -434,7 +445,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   summaryCard: {
-    borderColor: colors.primaryDark,
+    borderColor: 'rgba(0, 229, 160, 0.25)',
     borderWidth: 1,
   },
   cardHeader: {
@@ -444,9 +455,29 @@ const styles = StyleSheet.create({
   },
   cardLabel: {
     ...typography.caption,
-    color: colors.primary,
+    color: colors.textMuted,
     fontWeight: '700',
     letterSpacing: 1.2,
+  },
+  cardLabelAi: {
+    color: colors.primary,
+  },
+  aiLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  aiDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: colors.primary,
+  },
+  cardDivider: {
+    height: 1,
+    backgroundColor: colors.divider,
+    marginHorizontal: -spacing.md,
+    marginVertical: 2,
   },
   liveIndicator: {
     flexDirection: 'row',
@@ -459,10 +490,18 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     backgroundColor: colors.recording,
   },
+  timerChip: {
+    backgroundColor: colors.backgroundSecondary,
+    borderRadius: radius.full,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 3,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
   timer: {
     ...typography.mono,
     color: colors.textMuted,
-    fontSize: 13,
+    fontSize: 12,
   },
   transcriptScroll: {
     maxHeight: 160,
@@ -490,10 +529,12 @@ const styles = StyleSheet.create({
     borderRadius: radius.full,
     paddingHorizontal: spacing.sm,
     paddingVertical: 3,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 229, 160, 0.2)',
   },
   streamingText: {
     ...typography.caption,
-    color: colors.accent,
+    color: colors.primary,
     fontSize: 10,
   },
   retryBtn: {
@@ -527,17 +568,28 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xxl,
     gap: spacing.md,
   },
-  placeholderEmoji: {
-    fontSize: 52,
-    opacity: 0.3,
+  placeholderIcon: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  placeholderIconText: {
+    fontSize: 28,
+    color: colors.textMuted,
+    opacity: 0.5,
   },
   placeholderTitle: {
     ...typography.h3,
-    color: colors.textMuted,
+    color: colors.textSecondary,
   },
   placeholderText: {
     ...typography.bodySmall,
-    color: colors.textDisabled,
+    color: colors.textMuted,
     textAlign: 'center',
     lineHeight: 20,
   },
@@ -547,7 +599,7 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xl,
     alignItems: 'center',
     borderTopWidth: 1,
-    borderTopColor: colors.divider,
+    borderTopColor: colors.border,
   },
   sessionActions: {
     flexDirection: 'row',
@@ -581,7 +633,7 @@ const styles = StyleSheet.create({
   },
   saveBtnText: {
     ...typography.body,
-    color: '#FFFFFF',
+    color: colors.background,
     fontWeight: '700',
   },
 });

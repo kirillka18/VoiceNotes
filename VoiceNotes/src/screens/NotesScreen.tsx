@@ -81,7 +81,7 @@ export default function NotesScreen() {
       {/* Search */}
       {notes.length > 2 && (
         <View style={styles.searchWrapper}>
-          <Text style={styles.searchIcon}>🔍</Text>
+          <Text style={styles.searchIcon}>○</Text>
           <TextInput
             style={styles.searchInput}
             placeholder="Поиск по заметкам..."
@@ -91,7 +91,7 @@ export default function NotesScreen() {
             returnKeyType="search"
           />
           {query.length > 0 && (
-            <Pressable onPress={() => setQuery('')}>
+            <Pressable onPress={() => setQuery('')} style={styles.searchClearBtn}>
               <Text style={styles.searchClear}>✕</Text>
             </Pressable>
           )}
@@ -101,7 +101,9 @@ export default function NotesScreen() {
       {/* List */}
       {notes.length === 0 ? (
         <View style={styles.empty}>
-          <Text style={styles.emptyEmoji}>📝</Text>
+          <View style={styles.emptyIcon}>
+            <Text style={styles.emptyIconText}>≡</Text>
+          </View>
           <Text style={styles.emptyTitle}>Нет заметок</Text>
           <Text style={styles.emptyText}>
             Запишите разговор на главной странице.{'\n'}
@@ -147,7 +149,7 @@ const styles = StyleSheet.create({
     paddingTop: spacing.sm,
     paddingBottom: spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: colors.divider,
+    borderBottomColor: colors.border,
   },
   headerTitle: {
     ...typography.h2,
@@ -162,6 +164,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm,
     paddingVertical: 6,
     borderRadius: radius.sm,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 71, 87, 0.3)',
+    backgroundColor: colors.errorBg,
   },
   clearBtnText: {
     ...typography.bodySmall,
@@ -181,8 +186,9 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   searchIcon: {
-    fontSize: 14,
-    opacity: 0.5,
+    fontSize: 16,
+    color: colors.textMuted,
+    opacity: 0.6,
   },
   searchInput: {
     flex: 1,
@@ -190,10 +196,12 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     paddingVertical: 10,
   },
+  searchClearBtn: {
+    padding: 4,
+  },
   searchClear: {
     color: colors.textMuted,
     fontSize: 12,
-    padding: 4,
   },
   list: {
     padding: spacing.md,
@@ -206,17 +214,28 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     paddingHorizontal: spacing.xl,
   },
-  emptyEmoji: {
-    fontSize: 56,
-    opacity: 0.2,
+  emptyIcon: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyIconText: {
+    fontSize: 28,
+    color: colors.textMuted,
+    opacity: 0.4,
   },
   emptyTitle: {
     ...typography.h3,
-    color: colors.textMuted,
+    color: colors.textSecondary,
   },
   emptyText: {
     ...typography.bodySmall,
-    color: colors.textDisabled,
+    color: colors.textMuted,
     textAlign: 'center',
     lineHeight: 20,
   },

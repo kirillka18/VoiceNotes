@@ -19,8 +19,8 @@ interface RecordButtonProps {
 }
 
 const BUTTON_SIZE = 80;
-const RING_SIZE = BUTTON_SIZE + 24;
-const OUTER_RING_SIZE = BUTTON_SIZE + 52;
+const RING_SIZE = BUTTON_SIZE + 28;
+const OUTER_RING_SIZE = BUTTON_SIZE + 58;
 
 export default function RecordButton({
   isRecording,
@@ -83,31 +83,23 @@ export default function RecordButton({
   }, [isRecording, isSummarizing]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const ring1Style = useAnimatedStyle(() => ({
-    opacity: interpolate(pulse1.value, [0, 0.5, 1], [0.6, 0.3, 0]),
-    transform: [
-      {
-        scale: interpolate(pulse1.value, [0, 1], [1, 1.8]),
-      },
-    ],
+    opacity: interpolate(pulse1.value, [0, 0.5, 1], [0.5, 0.2, 0]),
+    transform: [{ scale: interpolate(pulse1.value, [0, 1], [1, 1.85]) }],
   }));
 
   const ring2Style = useAnimatedStyle(() => ({
-    opacity: interpolate(pulse2.value, [0, 0.5, 1], [0.4, 0.2, 0]),
-    transform: [
-      {
-        scale: interpolate(pulse2.value, [0, 1], [1, 2.2]),
-      },
-    ],
+    opacity: interpolate(pulse2.value, [0, 0.5, 1], [0.3, 0.15, 0]),
+    transform: [{ scale: interpolate(pulse2.value, [0, 1], [1, 2.3]) }],
   }));
 
   const buttonScale = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
   }));
 
-  const buttonColor = isRecording
+  const buttonBg = isRecording
     ? colors.recording
     : isSummarizing
-      ? colors.accent
+      ? colors.primaryDark
       : colors.primary;
 
   const glowColor = isRecording ? colors.recordingGlow : colors.primaryGlow;
@@ -145,17 +137,17 @@ export default function RecordButton({
       {/* Main button */}
       <Animated.View style={buttonScale}>
         <Pressable
-          style={[styles.button, { backgroundColor: buttonColor }]}
+          style={[styles.button, { backgroundColor: buttonBg }]}
           onPress={onPress}
           disabled={disabled}
           android_ripple={{ color: 'rgba(255,255,255,0.2)', borderless: true, radius: BUTTON_SIZE / 2 }}
         >
           {isSummarizing ? (
-            <Text style={styles.icon}>✦</Text>
+            <Text style={styles.iconText}>◎</Text>
           ) : isRecording ? (
             <View style={styles.stopIcon} />
           ) : (
-            <Text style={styles.icon}>🎙</Text>
+            <Text style={styles.iconText}>◉</Text>
           )}
         </Pressable>
       </Animated.View>
@@ -183,14 +175,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  icon: {
-    fontSize: 30,
+  iconText: {
+    fontSize: 28,
+    color: colors.background,
+    fontWeight: '700',
   },
   stopIcon: {
     width: 26,
     height: 26,
-    borderRadius: 5,
-    backgroundColor: '#FFFFFF',
+    borderRadius: 6,
+    backgroundColor: colors.background,
   },
   label: {
     fontSize: 12,
