@@ -159,12 +159,6 @@ export default function SettingsScreen() {
               На каком языке вы будете говорить во время записи.
             </Text>
 
-            <View style={styles.currentValue}>
-              <Text style={styles.currentValueText}>
-                {currentLang.flag}  {currentLang.name}
-              </Text>
-            </View>
-
             <View style={styles.optionGrid}>
               {LANGUAGES.map((lang) => {
                 const active = lang.code === settings.recognitionLanguage;

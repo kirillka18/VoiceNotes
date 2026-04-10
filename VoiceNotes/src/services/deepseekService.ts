@@ -104,26 +104,38 @@ export interface StreamSummaryOptions {
   onError: (error: string) => void;
 }
 
+const LANG_NAMES: Record<string, string> = {
+  'ru': 'Russian',
+  'en': 'English',
+  'de': 'German',
+  'fr': 'French',
+  'es': 'Spanish',
+  'zh': 'Chinese',
+  'uk': 'Ukrainian',
+  'el': 'Greek',
+};
+
+function getLangNameForPrompt(lang: string): string {
+  const prefix = lang.split('-')[0].toLowerCase();
+  return LANG_NAMES[prefix] ?? 'the same language as the transcript';
+}
+
 function buildSystemPrompt(lang: string): string {
-  if (lang.startsWith('ru')) {
-    return (
-      'Ты — умный помощник, который превращает расшифровки речи в структурированные заметки. ' +
-      'Выдели ключевые мысли, решения и факты в виде лаконичного маркированного списка с символом •. ' +
-      'Используй короткие предложения. Не добавляй лишних пояснений. Отвечай на русском языке.'
-    );
-  }
+  const langName = getLangNameForPrompt(lang);
   return (
-    'You are a smart assistant that converts speech transcripts into structured notes. ' +
-    'Extract key ideas, decisions and facts as a concise bullet list using the • symbol. ' +
-    'Use short sentences. Skip filler words. Be precise and clear.'
+    `You are a smart assistant that converts speech transcripts into structured notes. ` +
+    `Extract key ideas, decisions and facts as a concise bullet list using the • symbol. ` +
+    `Use short sentences. Skip filler words. Be precise and clear. ` +
+    `IMPORTANT: You MUST respond exclusively in ${langName}. Do not use any other language.`
   );
 }
 
 function buildUserPrompt(transcript: string, lang: string): string {
-  if (lang.startsWith('ru')) {
-    return `Создай краткие заметки из этой расшифровки разговора:\n\n${transcript}`;
-  }
-  return `Create concise notes from this conversation transcript:\n\n${transcript}`;
+  const langName = getLangNameForPrompt(lang);
+  return (
+    `Create concise structured notes from this transcript. ` +
+    `Respond in ${langName} only.\n\n${transcript}`
+  );
 }
 
 function parseSSEChunk(
