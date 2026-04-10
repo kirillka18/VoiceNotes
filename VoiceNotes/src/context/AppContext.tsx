@@ -70,7 +70,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     autoSummarizeAfterWords: 60,
     summaryLanguage: 'ru-RU',
     keepTranscriptInNote: true,
-    androidAudioSource: 6,
+    androidAudioSource: 1,
   });
   const [notes, setNotes] = useState<Note[]>([]);
 

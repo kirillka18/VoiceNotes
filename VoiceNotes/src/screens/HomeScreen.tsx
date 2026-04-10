@@ -67,6 +67,7 @@ export default function HomeScreen() {
             lang: settings.recognitionLanguage,
             interimResults: true,
             continuous: true,
+            androidAudioSource: settings.androidAudioSource,
             androidIntentOptions: { EXTRA_LANGUAGE_MODEL: 'free_form' } as never,
           });
         }
@@ -148,6 +149,7 @@ export default function HomeScreen() {
         lang: settings.recognitionLanguage,
         interimResults: true,
         continuous: true,
+        androidAudioSource: settings.androidAudioSource,
         androidIntentOptions: { EXTRA_LANGUAGE_MODEL: 'free_form' } as never,
       });
     } else if (isRecording) {

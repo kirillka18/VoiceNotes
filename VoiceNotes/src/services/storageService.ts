@@ -32,7 +32,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   autoSummarizeAfterWords: 60,
   summaryLanguage: 'ru-RU',
   keepTranscriptInNote: true,
-  androidAudioSource: 6, // VOICE_RECOGNITION — оптимально для распознавания речи
+  androidAudioSource: 1, // MIC — захватывает всех говорящих в комнате
 };
 
 // ─── Notes ────────────────────────────────────────────────────────────────────
