@@ -57,7 +57,7 @@ export default function TabNavigator() {
           tabBarIcon: ({ focused }) => (
             <TabIcon
               focused={focused}
-              icon={isRecording ? '⏺' : '⬤'}
+              icon={isRecording ? '◉' : '◎'}
               label="Запись"
             />
           ),

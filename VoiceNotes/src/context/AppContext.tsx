@@ -11,6 +11,7 @@ import {
   Note,
   createNote,
   deleteNote as deleteNoteFromStorage,
+  updateNote as updateNoteInStorage,
   clearAllNotes,
   loadNotes,
   loadSettings,
@@ -33,6 +34,7 @@ interface AppContextValue {
   deleteNote: (id: string) => Promise<void>;
   deleteAllNotes: () => Promise<void>;
   refreshNotes: () => Promise<void>;
+  updateNote: (note: Note) => Promise<void>;
 
   // Recording session
   recordingState: RecordingState;
@@ -148,6 +150,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const deleteAllNotes = useCallback(async () => {
     await clearAllNotes();
     setNotes([]);
+  }, []);
+
+  const updateNote = useCallback(async (note: Note) => {
+    const updated = await updateNoteInStorage(note);
+    setNotes(updated);
   }, []);
 
   // ─── Recording session ──────────────────────────────────────────────────────
@@ -319,6 +326,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         deleteNote,
         deleteAllNotes,
         refreshNotes,
+        updateNote,
         recordingState,
         sessionDuration,
         liveTranscript,

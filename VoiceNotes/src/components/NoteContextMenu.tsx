@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import {
+  ActivityIndicator,
   Modal,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   ToastAndroid,
@@ -13,10 +15,14 @@ import Animated, {
   withTiming,
   Easing,
 } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Clipboard from 'expo-clipboard';
 import { cacheDirectory, writeAsStringAsync, EncodingType } from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import { Note, formatDate, formatDuration } from '../services/storageService';
+import { translateText } from '../services/deepseekService';
+import { useApp } from '../context/AppContext';
+import { LANGUAGES } from '../constants/languages';
 import { colors, radius, spacing, typography } from '../theme';
 import CustomModal from './CustomModal';
 
@@ -41,9 +47,15 @@ export default function NoteContextMenu({
   onClose,
   onDelete,
 }: NoteContextMenuProps) {
+  const insets = useSafeAreaInsets();
+  const { settings, updateNote } = useApp();
   const translateY = useSharedValue(300);
   const overlayOpacity = useSharedValue(0);
+
   const [deleteConfirmVisible, setDeleteConfirmVisible] = useState(false);
+  const [langPickerVisible, setLangPickerVisible] = useState(false);
+  const [translating, setTranslating] = useState(false);
+  const [translateError, setTranslateError] = useState<string | null>(null);
 
   useEffect(() => {
     if (visible) {
@@ -113,9 +125,7 @@ export default function NoteContextMenu({
       const fileName = `VN_${safeTitle}_${Date.now()}.txt`;
       const fileUri = `${cacheDirectory}${fileName}`;
 
-      await writeAsStringAsync(fileUri, content, {
-        encoding: EncodingType.UTF8,
-      });
+      await writeAsStringAsync(fileUri, content, { encoding: EncodingType.UTF8 });
 
       const canShare = await Sharing.isAvailableAsync();
       if (canShare) {
@@ -126,9 +136,83 @@ export default function NoteContextMenu({
       } else {
         toast('Функция сохранения недоступна на этом устройстве');
       }
-    } catch (e) {
+    } catch {
       toast('Ошибка при сохранении файла');
     }
+  };
+
+  const handleTranslatePress = () => {
+    onClose();
+    setTimeout(() => setLangPickerVisible(true), 250);
+  };
+
+  const handleSelectLanguage = (lang: typeof LANGUAGES[0]) => {
+    setLangPickerVisible(false);
+    if (!settings.deepseekApiKey.trim()) {
+      setTranslateError('API ключ не настроен. Перейдите в Настройки.');
+      return;
+    }
+    setTranslating(true);
+    setTranslateError(null);
+
+    const partsToTranslate: Array<{ key: 'summary' | 'transcript'; text: string }> = [
+      { key: 'summary', text: note.summary },
+      ...(note.transcript ? [{ key: 'transcript' as const, text: note.transcript }] : []),
+    ];
+
+    let translatedSummary = note.summary;
+    let translatedTranscript = note.transcript;
+    let completed = 0;
+    let failed = false;
+
+    const finish = () => {
+      if (failed) return;
+      completed += 1;
+      if (completed < partsToTranslate.length) return;
+
+      // Re-derive title from translated summary
+      const firstLine = translatedSummary.split('\n').find((l) => l.trim()) ?? translatedSummary;
+      const newTitle = firstLine.replace(/^[•\-*]\s*/, '').slice(0, 48).trim() || note.title;
+
+      const updatedNote: Note = {
+        ...note,
+        title: newTitle,
+        summary: translatedSummary,
+        transcript: translatedTranscript,
+        language: lang.code,
+      };
+
+      updateNote(updatedNote)
+        .then(() => {
+          setTranslating(false);
+          toast(`Заметка переведена на ${lang.nativeName}`);
+        })
+        .catch(() => {
+          setTranslating(false);
+          setTranslateError('Ошибка сохранения перевода.');
+        });
+    };
+
+    partsToTranslate.forEach(({ key, text }) => {
+      translateText({
+        text,
+        targetLang: lang.code,
+        targetLangName: lang.name,
+        apiKey: settings.deepseekApiKey,
+        onDone: (translated) => {
+          if (key === 'summary') translatedSummary = translated;
+          if (key === 'transcript') translatedTranscript = translated;
+          finish();
+        },
+        onError: (err) => {
+          if (!failed) {
+            failed = true;
+            setTranslating(false);
+            setTranslateError(err);
+          }
+        },
+      });
+    });
   };
 
   const handleDeletePress = () => {
@@ -144,19 +228,25 @@ export default function NoteContextMenu({
       onPress: handleCopySummary,
     },
     {
-      icon: '📄',
+      icon: '≡',
       label: 'Скопировать расшифровку',
       sublabel: 'Полный оригинальный текст',
       onPress: handleCopyTranscript,
     },
     {
-      icon: '💾',
+      icon: '◈',
+      label: 'Перевести заметку',
+      sublabel: 'Перевести AI заметки и расшифровку',
+      onPress: handleTranslatePress,
+    },
+    {
+      icon: '↑',
       label: 'Сохранить в файл .txt',
       sublabel: 'Экспорт через «Поделиться»',
       onPress: handleSaveToFile,
     },
     {
-      icon: '🗑',
+      icon: '✕',
       label: 'Удалить заметку',
       onPress: handleDeletePress,
       destructive: true,
@@ -165,16 +255,15 @@ export default function NoteContextMenu({
 
   return (
     <>
+      {/* ── Main bottom sheet ── */}
       <Modal visible={visible} transparent statusBarTranslucent animationType="none">
         <Pressable style={styles.overlay} onPress={onClose}>
           <Animated.View style={[StyleSheet.absoluteFill, styles.overlayBg, overlayStyle]} />
         </Pressable>
 
         <Animated.View style={[styles.sheet, sheetStyle]} pointerEvents="box-none">
-          {/* Handle */}
           <View style={styles.handle} />
 
-          {/* Note info */}
           <View style={styles.noteInfo}>
             <View style={styles.noteInfoDot} />
             <View style={styles.noteInfoText}>
@@ -187,7 +276,6 @@ export default function NoteContextMenu({
 
           <View style={styles.menuDivider} />
 
-          {/* Menu items */}
           {menuItems.map((item, i) => (
             <Pressable
               key={i}
@@ -213,11 +301,73 @@ export default function NoteContextMenu({
             </Pressable>
           ))}
 
-          <View style={styles.bottomPad} />
+          <View style={[styles.bottomPad, { height: spacing.xl + insets.bottom }]} />
         </Animated.View>
       </Modal>
 
-      {/* Delete confirmation — custom modal */}
+      {/* ── Language picker ── */}
+      <Modal visible={langPickerVisible} transparent statusBarTranslucent animationType="fade">
+        <Pressable style={styles.pickerOverlay} onPress={() => setLangPickerVisible(false)}>
+          <Pressable onPress={() => {}} style={styles.pickerCard}>
+            <View style={styles.pickerHeader}>
+              <View style={styles.pickerAccent} />
+              <Text style={styles.pickerTitle}>Перевести на язык</Text>
+            </View>
+            <View style={styles.pickerDivider} />
+            <ScrollView style={styles.pickerScroll} showsVerticalScrollIndicator={false}>
+              {LANGUAGES.map((lang) => (
+                <Pressable
+                  key={lang.code}
+                  style={({ pressed }) => [
+                    styles.langItem,
+                    pressed && styles.langItemPressed,
+                  ]}
+                  onPress={() => handleSelectLanguage(lang)}
+                  android_ripple={{ color: colors.primaryGlow }}
+                >
+                  <Text style={styles.langFlag}>{lang.flag}</Text>
+                  <View style={styles.langItemText}>
+                    <Text style={styles.langName}>{lang.name}</Text>
+                    <Text style={styles.langNative}>{lang.nativeName}</Text>
+                  </View>
+                  {note.language === lang.code && (
+                    <View style={styles.currentLangDot} />
+                  )}
+                </Pressable>
+              ))}
+            </ScrollView>
+            <View style={styles.pickerDivider} />
+            <Pressable
+              style={styles.pickerCancelBtn}
+              onPress={() => setLangPickerVisible(false)}
+            >
+              <Text style={styles.pickerCancelText}>Отмена</Text>
+            </Pressable>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* ── Translating indicator ── */}
+      <Modal visible={translating} transparent statusBarTranslucent animationType="fade">
+        <View style={styles.loadingOverlay}>
+          <View style={styles.loadingCard}>
+            <ActivityIndicator size="large" color={colors.primary} />
+            <Text style={styles.loadingText}>Переводим заметку...</Text>
+            <Text style={styles.loadingSubtext}>Это может занять несколько секунд</Text>
+          </View>
+        </View>
+      </Modal>
+
+      {/* ── Translate error ── */}
+      <CustomModal
+        visible={!!translateError}
+        title="Ошибка перевода"
+        message={translateError ?? ''}
+        onClose={() => setTranslateError(null)}
+        buttons={[{ label: 'OK', style: 'default', onPress: () => setTranslateError(null) }]}
+      />
+
+      {/* ── Delete confirmation ── */}
       <CustomModal
         visible={deleteConfirmVisible}
         title="Удалить заметку?"
@@ -284,19 +434,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     flexShrink: 0,
   },
-  noteInfoText: {
-    flex: 1,
-    gap: 2,
-  },
-  noteTitle: {
-    ...typography.body,
-    color: colors.textPrimary,
-    fontWeight: '600',
-  },
-  noteMeta: {
-    ...typography.caption,
-    color: colors.textMuted,
-  },
+  noteInfoText: { flex: 1, gap: 2 },
+  noteTitle: { ...typography.body, color: colors.textPrimary, fontWeight: '600' },
+  noteMeta: { ...typography.caption, color: colors.textMuted },
   menuDivider: {
     height: 1,
     backgroundColor: colors.divider,
@@ -311,32 +451,97 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
   },
   menuItemDestructive: {},
-  menuItemPressed: {
-    backgroundColor: colors.card,
-  },
+  menuItemPressed: { backgroundColor: colors.card },
   menuIcon: {
-    fontSize: 18,
+    fontSize: 17,
     width: 26,
     textAlign: 'center',
+    color: colors.textSecondary,
   },
-  menuIconDestructive: {},
-  menuItemText: {
+  menuIconDestructive: { color: colors.error },
+  menuItemText: { flex: 1, gap: 2 },
+  menuLabel: { ...typography.body, color: colors.textPrimary, fontWeight: '500' },
+  menuLabelDestructive: { color: colors.error },
+  menuSublabel: { ...typography.caption, color: colors.textMuted },
+  bottomPad: { height: spacing.xl },
+
+  // ── Language picker ──
+  pickerOverlay: {
     flex: 1,
-    gap: 2,
+    backgroundColor: colors.overlay,
+    justifyContent: 'center',
+    paddingHorizontal: spacing.lg,
   },
-  menuLabel: {
+  pickerCard: {
+    backgroundColor: colors.cardElevated,
+    borderRadius: radius.xl,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    maxHeight: '80%',
+    overflow: 'hidden',
+  },
+  pickerHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    padding: spacing.md,
+    paddingBottom: spacing.sm,
+  },
+  pickerAccent: {
+    width: 3,
+    height: 18,
+    borderRadius: 2,
+    backgroundColor: colors.primary,
+  },
+  pickerTitle: { ...typography.h3, color: colors.textPrimary },
+  pickerDivider: { height: 1, backgroundColor: colors.divider },
+  pickerScroll: { flexGrow: 0 },
+  langItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 13,
+  },
+  langItemPressed: { backgroundColor: colors.card },
+  langFlag: { fontSize: 22 },
+  langItemText: { flex: 1, gap: 1 },
+  langName: { ...typography.body, color: colors.textPrimary, fontWeight: '500' },
+  langNative: { ...typography.caption, color: colors.textMuted },
+  currentLangDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: colors.primary,
+  },
+  pickerCancelBtn: {
+    paddingVertical: 15,
+    alignItems: 'center',
+  },
+  pickerCancelText: {
     ...typography.body,
-    color: colors.textPrimary,
+    color: colors.textMuted,
     fontWeight: '500',
   },
-  menuLabelDestructive: {
-    color: colors.error,
+
+  // ── Loading ──
+  loadingOverlay: {
+    flex: 1,
+    backgroundColor: colors.overlay,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: spacing.xl,
   },
-  menuSublabel: {
-    ...typography.caption,
-    color: colors.textMuted,
+  loadingCard: {
+    backgroundColor: colors.cardElevated,
+    borderRadius: radius.xl,
+    padding: spacing.xl,
+    alignItems: 'center',
+    gap: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    width: '100%',
   },
-  bottomPad: {
-    height: spacing.xl,
-  },
+  loadingText: { ...typography.h3, color: colors.textPrimary, textAlign: 'center' },
+  loadingSubtext: { ...typography.bodySmall, color: colors.textMuted, textAlign: 'center' },
 });

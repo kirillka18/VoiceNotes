@@ -106,51 +106,50 @@ export default function RecordButton({
 
   return (
     <View style={styles.container}>
-      {/* Outer pulse rings */}
-      <Animated.View
-        style={[
-          styles.ring,
-          {
-            width: OUTER_RING_SIZE,
-            height: OUTER_RING_SIZE,
-            borderRadius: OUTER_RING_SIZE / 2,
-            backgroundColor: glowColor,
-            position: 'absolute',
-          },
-          ring2Style,
-        ]}
-      />
-      <Animated.View
-        style={[
-          styles.ring,
-          {
-            width: RING_SIZE,
-            height: RING_SIZE,
-            borderRadius: RING_SIZE / 2,
-            backgroundColor: glowColor,
-            position: 'absolute',
-          },
-          ring1Style,
-        ]}
-      />
+      {/* Button area: rings + button share the same center */}
+      <View style={styles.buttonArea}>
+        <Animated.View
+          style={[
+            styles.ring,
+            {
+              width: OUTER_RING_SIZE,
+              height: OUTER_RING_SIZE,
+              borderRadius: OUTER_RING_SIZE / 2,
+              backgroundColor: glowColor,
+            },
+            ring2Style,
+          ]}
+        />
+        <Animated.View
+          style={[
+            styles.ring,
+            {
+              width: RING_SIZE,
+              height: RING_SIZE,
+              borderRadius: RING_SIZE / 2,
+              backgroundColor: glowColor,
+            },
+            ring1Style,
+          ]}
+        />
 
-      {/* Main button */}
-      <Animated.View style={buttonScale}>
-        <Pressable
-          style={[styles.button, { backgroundColor: buttonBg }]}
-          onPress={onPress}
-          disabled={disabled}
-          android_ripple={{ color: 'rgba(255,255,255,0.2)', borderless: true, radius: BUTTON_SIZE / 2 }}
-        >
-          {isSummarizing ? (
-            <Text style={styles.iconText}>◎</Text>
-          ) : isRecording ? (
-            <View style={styles.stopIcon} />
-          ) : (
-            <Text style={styles.iconText}>◉</Text>
-          )}
-        </Pressable>
-      </Animated.View>
+        <Animated.View style={buttonScale}>
+          <Pressable
+            style={[styles.button, { backgroundColor: buttonBg }]}
+            onPress={onPress}
+            disabled={disabled}
+            android_ripple={{ color: 'rgba(255,255,255,0.2)', borderless: true, radius: BUTTON_SIZE / 2 }}
+          >
+            {isSummarizing ? (
+              <Text style={styles.iconText}>◎</Text>
+            ) : isRecording ? (
+              <View style={styles.stopIcon} />
+            ) : (
+              <Text style={styles.iconText}>◉</Text>
+            )}
+          </Pressable>
+        </Animated.View>
+      </View>
 
       <Text style={[styles.label, { color: isRecording ? colors.recording : colors.textMuted }]}>
         {isSummarizing ? 'Обработка...' : isRecording ? 'Нажми чтобы остановить' : 'Нажми для записи'}
@@ -162,8 +161,13 @@ export default function RecordButton({
 const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
-    justifyContent: 'center',
     gap: 16,
+  },
+  buttonArea: {
+    width: OUTER_RING_SIZE,
+    height: OUTER_RING_SIZE,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   ring: {
     position: 'absolute',

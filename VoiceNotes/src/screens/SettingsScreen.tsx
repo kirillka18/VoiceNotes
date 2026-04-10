@@ -14,6 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useApp } from '../context/AppContext';
 import CustomModal from '../components/CustomModal';
 import { colors, radius, spacing, typography } from '../theme';
+import { LANGUAGES } from '../constants/languages';
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 
@@ -25,16 +26,6 @@ const WORD_THRESHOLDS = [
   { value: 999, label: 'Только вручную' },
 ];
 
-const LANGUAGES = [
-  { code: 'ru-RU', flag: '🇷🇺', name: 'Русский' },
-  { code: 'en-US', flag: '🇺🇸', name: 'English (US)' },
-  { code: 'en-GB', flag: '🇬🇧', name: 'English (UK)' },
-  { code: 'de-DE', flag: '🇩🇪', name: 'Deutsch' },
-  { code: 'fr-FR', flag: '🇫🇷', name: 'Français' },
-  { code: 'es-ES', flag: '🇪🇸', name: 'Español' },
-  { code: 'zh-CN', flag: '🇨🇳', name: '中文 (普通话)' },
-  { code: 'uk-UA', flag: '🇺🇦', name: 'Українська' },
-];
 
 const MIC_SOURCES = [
   {
@@ -206,12 +197,6 @@ export default function SettingsScreen() {
             <Text style={styles.fieldHint}>
               Выбери тип микрофона. При наушниках с микрофоном — «Гарнитура».
             </Text>
-
-            <View style={styles.currentValue}>
-              <Text style={styles.currentValueText}>
-                {currentMic.icon}  {currentMic.label}
-              </Text>
-            </View>
 
             <View style={styles.micGrid}>
               {MIC_SOURCES.map((mic) => {

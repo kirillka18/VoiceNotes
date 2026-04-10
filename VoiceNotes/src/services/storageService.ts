@@ -54,6 +54,13 @@ export async function saveNote(note: Note): Promise<void> {
   await AsyncStorage.setItem(KEYS.NOTES, JSON.stringify(updated));
 }
 
+export async function updateNote(updated: Note): Promise<Note[]> {
+  const notes = await loadNotes();
+  const result = notes.map((n) => (n.id === updated.id ? updated : n));
+  await AsyncStorage.setItem(KEYS.NOTES, JSON.stringify(result));
+  return result;
+}
+
 export async function deleteNote(id: string): Promise<Note[]> {
   const notes = await loadNotes();
   const updated = notes.filter((n) => n.id !== id);
