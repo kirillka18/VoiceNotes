@@ -1,0 +1,46 @@
+{
+  "expo": {
+    "name": "ЛРПК транскрибация",
+    "slug": "voicenotes",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#110E0B"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.voicenotes.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#110E0B"
+      },
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false,
+      "package": "com.voicenotes.app",
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.INTERNET"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-build-properties",
+      [
+        "expo-speech-recognition",
+        {
+          "microphonePermission": "Приложение использует микрофон для записи и транскрибации речи.",
+          "speechRecognitionPermission": "Приложение использует распознавание речи для создания заметок."
+        }
+      ]
+    ]
+  }
+}

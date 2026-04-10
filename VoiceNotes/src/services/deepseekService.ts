@@ -1,0 +1,150 @@
+const DEEPSEEK_API_URL = 'https://api.deepseek.com/chat/completions';
+
+export interface StreamSummaryOptions {
+  transcript: string;
+  apiKey: string;
+  lang?: string;
+  onChunk: (chunk: string) => void;
+  onDone: () => void;
+  onError: (error: string) => void;
+}
+
+function buildSystemPrompt(lang: string): string {
+  if (lang.startsWith('ru')) {
+    return (
+      'Ты — умный помощник, который превращает расшифровки речи в структурированные заметки. ' +
+      'Выдели ключевые мысли, решения и факты в виде лаконичного маркированного списка с символом •. ' +
+      'Используй короткие предложения. Не добавляй лишних пояснений. Отвечай на русском языке.'
+    );
+  }
+  return (
+    'You are a smart assistant that converts speech transcripts into structured notes. ' +
+    'Extract key ideas, decisions and facts as a concise bullet list using the • symbol. ' +
+    'Use short sentences. Skip filler words. Be precise and clear.'
+  );
+}
+
+function buildUserPrompt(transcript: string, lang: string): string {
+  if (lang.startsWith('ru')) {
+    return `Создай краткие заметки из этой расшифровки разговора:\n\n${transcript}`;
+  }
+  return `Create concise notes from this conversation transcript:\n\n${transcript}`;
+}
+
+function parseSSEChunk(
+  raw: string,
+  onChunk: (chunk: string) => void,
+  onDone: () => void,
+): boolean {
+  let done = false;
+  const lines = raw.split('\n');
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed.startsWith('data: ')) continue;
+    const data = trimmed.slice(6).trim();
+    if (data === '[DONE]') {
+      done = true;
+      onDone();
+      break;
+    }
+    try {
+      const parsed = JSON.parse(data);
+      const content: string | undefined = parsed?.choices?.[0]?.delta?.content;
+      if (content) onChunk(content);
+    } catch {
+      // Skip malformed SSE chunks
+    }
+  }
+  return done;
+}
+
+/**
+ * Stream a summary from DeepSeek using XMLHttpRequest.
+ * fetch().body (ReadableStream) is unreliable on Android React Native —
+ * XHR onprogress gives incremental responseText which works consistently.
+ *
+ * Returns an abort function.
+ */
+export function streamSummary(options: StreamSummaryOptions): () => void {
+  const { transcript, apiKey, lang = 'ru-RU', onChunk, onDone, onError } = options;
+
+  if (!apiKey.trim()) {
+    onError('API ключ не настроен. Перейдите в Настройки.');
+    return () => {};
+  }
+  if (!transcript.trim() || transcript.split(/\s+/).length < 5) {
+    onError('Слишком мало текста для анализа.');
+    return () => {};
+  }
+
+  const xhr = new XMLHttpRequest();
+  let processedLength = 0;
+  let finished = false;
+
+  xhr.open('POST', DEEPSEEK_API_URL, true);
+  xhr.setRequestHeader('Content-Type', 'application/json');
+  xhr.setRequestHeader('Authorization', `Bearer ${apiKey}`);
+
+  // Incremental streaming — fires as new chunks arrive
+  xhr.onprogress = () => {
+    if (finished) return;
+    const newText = xhr.responseText.slice(processedLength);
+    processedLength = xhr.responseText.length;
+    if (!newText) return;
+    parseSSEChunk(newText, onChunk, () => {
+      // [DONE] received — finish here so onload doesn't need to call onDone
+      if (!finished) {
+        finished = true;
+        onDone();
+      }
+    });
+  };
+
+  xhr.onload = () => {
+    if (finished) return;
+
+    if (xhr.status === 200) {
+      // Process any remaining buffered data not yet seen by onprogress
+      const remaining = xhr.responseText.slice(processedLength);
+      if (remaining) parseSSEChunk(remaining, onChunk, () => {});
+      onDone();
+      finished = true;
+    } else if (xhr.status === 401) {
+      onError('Неверный API ключ DeepSeek.');
+    } else if (xhr.status === 402) {
+      onError('Недостаточно средств на балансе DeepSeek.');
+    } else if (xhr.status === 429) {
+      onError('Превышен лимит запросов. Попробуйте позже.');
+    } else {
+      onError(`Ошибка API: ${xhr.status}`);
+    }
+  };
+
+  xhr.onerror = () => {
+    onError('Нет подключения к интернету.');
+  };
+
+  xhr.ontimeout = () => {
+    onError('Превышено время ожидания ответа.');
+  };
+
+  xhr.timeout = 60000;
+
+  xhr.send(
+    JSON.stringify({
+      model: 'deepseek-chat',
+      messages: [
+        { role: 'system', content: buildSystemPrompt(lang) },
+        { role: 'user', content: buildUserPrompt(transcript, lang) },
+      ],
+      stream: true,
+      max_tokens: 1200,
+      temperature: 0.4,
+    }),
+  );
+
+  return () => {
+    finished = true;
+    xhr.abort();
+  };
+}
